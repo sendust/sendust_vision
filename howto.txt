@@ -1,0 +1,13 @@
+npm install socketio
+npm install express
+
+
+pip install python-socketio
+conda install -c anaconda cudatoolkit
+conda install -c menpo opencv
+
+
+
+check in python --- 
+	import cv2
+	print(cv2.getBuildInformation())

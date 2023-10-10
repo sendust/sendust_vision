@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+   <head><title>Hello world</title></head>
+   <script src="/socket.io/socket.io.js"></script>
+   <script>
+      var socket = io();
+      var count = 0;
+      socket.onAny((eventName) =>{
+        console.log(eventName);
+      });
+      
+      socket.on("msg_engine_status", function(data){
+        console.log(data);
+        document.getElementById("test").innerHTML = JSON.stringify(data);
+	  
+	  });
+      
+      function button1(){
+        socket.emit("msg_gui", {"command" : "This is gui message", "count" : count});
+        count += 1;
+        console.log("gui event sent..");
+      }
+   </script>
+   <body>
+   <h1>Hello world</h1>
+   <h1 id = "test"> status </h1>
+   <h1 id = "status"> server status </h1>
+   <button onclick="button1()">Click ME </button>
+   </body>
+</html>

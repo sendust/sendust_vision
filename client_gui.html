@@ -1,0 +1,315 @@
+<html>
+<head>
+<title>== sendust Vision 2023 ==</title>
+
+</head>
+
+
+<body>
+
+<h1 class="title_big"> == sendust VISION == </h1>
+<h2 class="display_team"> SBS Meda IT Team</h2>
+
+<hr>
+<button class="btn" onclick="button1()">  ALL ON </button>
+<button class="btn" onclick="button2()">  ALL OFF </button>
+<button class="btn" onclick="button3()">  RESTART </button>
+<button class="btn" onclick="button4()">  CAPTURE </button>
+<a href='/log'>LOG</a>
+&nbsp &nbsp &nbsp
+<a href='/image'>IMAGE</a>
+&nbsp &nbsp &nbsp
+<a href='/fm'>FILE MANAGER</a><br>
+
+
+<p class='slidecontainer'>
+  <b id = "value_freeze"> Margin-Freeze = ?</b>  <br>
+  <input oninput="slideinput1()" type="range" min="1" max="100" value="1" class="slider" id="slide1">
+</p>
+
+<p class='slidecontainer'>
+  <b id = "value_black"> Margin-Black = ?</b>  <br>
+  <input oninput="slideinput2()" type="range" min="1" max="100" value="1" class="slider" id="slide2">
+</p>
+
+
+
+
+<hr>
+
+
+</body>
+
+
+<style>
+    .title_big{
+    text-align: center;
+    margin: auto;
+    width: 50%;
+    border: 3px solid green;
+    padding: 10px;
+    }
+
+    .display_team{
+    text-align: right;
+    margin-right : 10%;
+    
+    }
+    .btn{
+    margin-right : 50px;
+    }
+
+    .slidecontainer {
+      width: 100%; /* Width of the outside container */
+    }
+
+
+    /* The slider itself */
+    .slider {
+      -webkit-appearance: none;  /* Override default CSS styles */
+      appearance: none;
+      width: 100%; /* Full-width */
+      height: 25px; /* Specified height */
+      background: #d3d3d3; /* Grey background */
+      outline: none; /* Remove outline */
+      opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+      -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+      transition: opacity .2s;
+    }
+
+    /* Mouse-over effects */
+    .slider:hover {
+      opacity: 1; /* Fully shown on mouse-over */
+    }
+
+    /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none; /* Override default look */
+      appearance: none;
+      width: 25px; /* Set a specific slider handle width */
+      height: 25px; /* Slider handle height */
+      background: #04AA6D; /* Green background */
+      cursor: pointer; /* Cursor on hover */
+    }
+
+    .slider::-moz-range-thumb {
+      width: 25px; /* Set a specific slider handle width */
+      height: 25px; /* Slider handle height */
+      background: #04AA6D; /* Green background */
+      cursor: pointer; /* Cursor on hover */
+    }
+
+
+</style>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+
+var socket = io();
+var count = 0;
+    socket.onAny((eventName) =>{
+    //console.log(eventName);
+    });
+
+generateTable()
+add_element_status()
+color_row = {"on" : "rgb(102, 153, 153)", "off" : "rgb(255, 255, 255)", "dirty" : "rgb(255, 204, 255)"}
+
+
+socket.on("msg_engine_status", function(data){
+    //console.log(data);
+    if (data[0].protocol == "status"){
+        document.getElementById("status").innerHTML = JSON.stringify(data);
+        }
+    update_table(data);
+
+});
+
+function slideinput1(){
+    var slider = document.getElementById("slide1");
+    var output = document.getElementById("value_freeze");
+    console.log(slider.value);
+    output.innerHTML = "Margin-Freeze = " + slider.value;
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "mgnF", "data" : slider.value}, "count" : count});
+    count += 1;
+
+}
+
+
+function slideinput2(){
+    var slider = document.getElementById("slide2");
+    var output = document.getElementById("value_black");
+    console.log(slider.value);
+    output.innerHTML = "Margin-Black = " + slider.value;
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "mgnB", "data" : slider.value}, "count" : count});
+    count += 1;
+
+}
+
+
+function button1(){
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "allon"}, "count" : count});
+    count += 1;
+    console.log("gui event sent..");
+}
+
+
+function button2(){
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "alloff"}, "count" : count});
+    count += 1;
+    console.log("gui event sent..");
+}
+
+
+function button3(){
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "reset"}, "count" : count});
+    count += 1;
+    console.log("gui event sent..");
+
+
+}
+
+function button4(){
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "capture"}, "count" : count});
+    count += 1;
+    console.log("gui event sent..");
+}
+
+
+function button99(){
+    
+    var tbl = document.getElementById("table_status")
+    tbl.rows[1].style.backgroundColor = "rgb(200, 200, 0)";            
+
+}
+
+
+function update_table(data){
+
+data.forEach((each)=>{
+    if (each.protocol == 'ROI'){
+        data_each = each.data
+        var myTable = document.getElementById('table_status');
+        myTable.rows[each.index + 1].cells[0].innerHTML = each.index;
+        myTable.rows[each.index + 1].cells[1].innerHTML = data_each.name;
+        myTable.rows[each.index + 1].cells[2].innerHTML = data_each.mean;
+        myTable.rows[each.index + 1].cells[3].innerHTML = data_each.black;
+        myTable.rows[each.index + 1].cells[4].innerHTML = data_each.freeze;
+        alarm_last = myTable.rows[each.index + 1].cells[5].innerHTML
+        myTable.rows[each.index + 1].cells[5].innerHTML = data_each.alarm;
+        if (alarm_last != data_each.alarm)
+        {
+            myTable.rows[each.index + 1].style.backgroundColor = color_row[data_each.alarm];   
+        }
+    }
+    
+    if (each.protocol == 'status'){
+        console.log(each);
+        data_each = each.data
+        var slider = document.getElementById("slide1");
+        var output = document.getElementById("value_freeze");
+        output.innerHTML = "Margin-Freeze = " + data_each.mgnF;
+        slider.value = data_each.mgnF;
+        
+        var slider2 = document.getElementById("slide2");
+        var output2 = document.getElementById("value_black");
+        output2.innerHTML = "Margin-Black = " + data_each.mgnB;
+        slider2.value = data_each.mgnB;
+        
+
+    }
+    
+});
+
+};
+
+function add_element_status(){
+
+    const para = document.createElement("p");
+    const node = document.createTextNode("status line..");
+    para.id = "status";
+    document.body.appendChild(para);
+
+}
+
+
+function table_value(){
+    var myTable = document.getElementById('table_status');
+    myTable.rows[0].cells[1].innerHTML = Date();
+}
+
+
+function generateTable() {
+    // creates a <table> element and a <tbody> element
+    const tbl = document.createElement("table");
+    const tblBody = document.createElement("tbody");
+    tbl.style.width = "100%";
+    tbl.id = "table_status";
+    // creating all cells
+    for (let i = 0; i < 35; i++) {
+        // creates a table row
+        const row = document.createElement("tr");
+
+        for (let j = 0; j < 7; j++) {
+          // Create a <td> element and a text node, make the text
+          // node the contents of the <td>, and put the <td> at
+          // the end of the table row
+          const cell = document.createElement("td");
+          const cellText = document.createTextNode(`row ${i}, col ${j}`);
+          cell.appendChild(cellText);
+          row.appendChild(cell);
+        }
+    // add the row to the end of the table body
+    tblBody.appendChild(row);
+    
+    // Put button at each rows at last column
+    cols = tblBody.rows[i].cells;
+    lastcol = tblBody.rows[i]['cells'][cols.length - 1];
+    lastcol.innerHTML = '';
+    let button = document.createElement('button');
+    button.innerText = 'Toggle';
+    button.onclick = function(){
+        button_row(i);
+    };
+    lastcol.appendChild(button);
+    
+    }
+
+    // put the <tbody> in the <table>
+    tbl.appendChild(tblBody);
+    // appends <table> into <body>
+    document.body.appendChild(tbl);
+    // sets the border attribute of tbl to '2'
+    tbl.setAttribute("border", "2");
+    
+    // Set table header text
+    tbl.rows[0].cells[0].innerHTML = "INDEX";
+    tbl.rows[0].cells[1].innerHTML = "NAME";
+    tbl.rows[0].cells[2].innerHTML = "MEAN";
+    tbl.rows[0].cells[3].innerHTML = "BLACK";
+    tbl.rows[0].cells[4].innerHTML = "FREEZE";
+    tbl.rows[0].cells[5].innerHTML = "ALARM";
+}
+
+
+function button_row(index_row){
+    console.log(`index = ${index_row}`)
+    let table = document.getElementById('table_status');
+    let data = table.rows[index_row].cells[1].innerHTML
+    console.log(`data = ${data}`)
+    socket.emit("msg_gui", {"protocol" : "gui", "data" : {"cmd" : "toggle", "name" : data}, "count" : count});
+    count += 1;
+    console.log("gui event sent..");
+
+}
+      
+
+      
+</script>
+
+
+
+</html>
+
