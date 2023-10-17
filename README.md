@@ -1,10 +1,10 @@
-"# sendust_vision"
+sendust_vision
 
 Detect freeze, black frame from decklink input
 User configurable with multiple ROI.
 Multiple decklink input support
 
-#how to run
+## how to run
 
 1. start www server
 node.exe fm_socketio.js
@@ -15,7 +15,7 @@ python.exe decklink_src.py
 or run vision_decklinksrc_loop.bat
 
 
-# Required modules
+## Required modules
 
 python
 ======
