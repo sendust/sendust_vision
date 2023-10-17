@@ -18,9 +18,7 @@ or run vision_decklinksrc_loop.bat
 ## Required modules
 
 ### python
-==========
 gstreamer, gst-base, gst-bad, gst-python, gtk3, cv2, numpy, socketio, 
 
 ### node
-========
 express, socket.io, cloudcmd
