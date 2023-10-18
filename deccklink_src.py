@@ -73,8 +73,9 @@ class decklinksrc:
 
     def save_frame(self, frame):
         path_im = os.path.join(os.getcwd(), 'image', f'decklink {self.index_device}-{get_timestamp("file")}.jpg')
-        cv2.imwrite(path_im, frame)
         print(f'Decklink index {self.index_device} -- last frame saved...')
+        cv2.imwrite(path_im, frame)
+        
 
 
     def new_buffer(self, sink, data):     # run every new frame..
@@ -418,6 +419,7 @@ def read_config(file_config):
         lines = rectangle_file.readlines()
         for each in lines[3:]:
             data = [element.strip() for element in each.strip().split(",")]
+            print(data)
             config.append({"index" : int(index), "x" : int(data[0]), "y" : int(data[1]),
             "width" : int(data[2]), "height" : int(data[3]), "name" : data[4], "decklink" : int(data[5])})
             index += 1
