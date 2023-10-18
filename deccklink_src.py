@@ -1,3 +1,13 @@
+#   Video freeze, black detector by sendust...
+#   Capture image from Decklink 
+#   Create ROI, calculate mean value..
+#   Shows black score, freeze score
+#   WWW GUI integration with socketio
+#
+#   2023/10/18  Last state save/load
+#
+#
+
 
 import numpy as np
 import cv2, time, threading, socketio, sys, datetime, os
@@ -7,6 +17,28 @@ from gi.repository import Gst
 
 
 Gst.init(None)
+
+
+def updatelog(txt, consoleout = False):
+    pid = os.getpid()
+    path_log = os.path.join(os.getcwd(), 'logmain', f'sendust_vision.log')
+    tm_stamp = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S.%f   ")
+    
+    try:
+        if (os.stat(path_log).st_size > 3000000):
+            path_archive = os.path.splitext(path_log)[0]
+            path_archive += '_' + datetime.datetime.now().strftime("_%m%d%Y-%H%M%S.log")
+            os.rename(path_log, path_archive)
+    except:
+        print("Log with file....")
+        
+    txt = str(txt)
+    with open(path_log, "a", encoding='UTF-8') as f:
+        f.write(tm_stamp + txt + "\n")
+    if consoleout:
+        col = os.get_terminal_size().columns
+        print(" " * (int(col) - 1), end='\r')     # clear single line
+        print(tm_stamp + txt)
 
 
 
@@ -222,6 +254,15 @@ class rectangle:
     def write_event(self, name_event):
         path_log = os.path.join(os.getcwd(), 'log', f'{self.name}.log')
         tm_stamp = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S.%f   ")
+        
+        try:
+            if (os.stat(path_log).st_size > 3000000):
+                path_archive = os.path.splitext(path_log)[0]
+                path_archive += '_' + datetime.datetime.now().strftime("_%m%d%Y-%H%M%S.log")
+                os.rename(path_log, path_archive)
+        except:
+            print("Log with file....")
+
         with open(path_log, "a", encoding='UTF-8') as f:
             f.write(tm_stamp + name_event + "\n")
 
@@ -375,16 +416,50 @@ def read_config(file_config):
             index += 1
     return config
 
+
+def save_status():
+    global roi_ary
+    updatelog("save status", True)
+    with open("status.txt", "w") as f:
+        f.write("name, margin_freeze, margin_black, status\n")
+        for each in roi_ary:
+            newline = f'{each.name}|{each.margin_freeze}|{each.margin_black}|{int(each.status)}\n'
+            f.write(newline)
+            updatelog(newlinee, True)
+
+
+def load_status():
+    global roi_ary
+    updatelog("load status", True)
+    try:
+        with open("status.txt", "r") as f:
+            header = f.readline()
+            print(header)
+            for each in roi_ary:
+                body = f.readline().strip()
+                value = body.split("|")
+                updatelog(value, True)
+                each.margin_freeze = int(value[1])
+                each.margin_black = int(value[2])
+                each.status = int(value[3])
+    except Exception as e:
+        print(e)
+
+
+
 def close_gracefully():
     global decklink, keep_playing, gui
-    print("Try to close program....")
+    updatelog("Try to close program....", True)
     keep_playing = False
     for decklink in list_decklink:
         try:
             decklink.stop()
         except Exception as e:
             print(e)
+    updatelog("close gui", True)
     gui.stop()
+    save_status()
+    
        
        
 send_json = []
@@ -399,26 +474,27 @@ list_config = read_config('list_dl.txt')
 list_decklink = []
 
 
-for deck_index in get_decklink_list(list_config):
-    print("Create Decklink array...")
+for deck_index in get_decklink_list(list_config):     # Probe total number of decklink
+    updatelog("Create Decklink array...", True)
     list_decklink.append(decklinksrc(deck_index))
     print("add decklink list with index ..." , deck_index)
 
 
-for each_config in list_config:
-    print("Create ROI array...")
+for each_config in list_config:         # Fill up ROI array
+    updatelog("Create ROI array...", True)
     roi_ary.append(rectangle(each_config["x"], each_config["y"], each_config["width"], 
         each_config["height"], name=each_config["name"], decklink=each_config["decklink"], index = each_config["index"]))
 
+load_status()
 
-for decklink in list_decklink:
-    print("start Decklink pipeline play ...")
+for decklink in list_decklink:      # Start pipeline for each decklink src
+    updatelog("start Decklink pipeline play ...", True)
     threading.Thread(target=decklink.play).start()
     
 
 keep_playing = True
 declink_index_min = min(get_decklink_list(list_config))
-print("Decklin index minimum is " , declink_index_min)
+updatelog("Decklin index minimum is " + str(declink_index_min), True)
 print("=" * 20)
 
 count = 0
@@ -442,10 +518,7 @@ while keep_playing:
             #if (decklink.index_device == declink_index_min):
                 keystroke = cv2.waitKey(1)
                 if keystroke ==  ord('q'):
-                    for decklink in list_decklink:
-                        decklink.stop()
-                        keep_playing = False;
-
+                    close_gracefully()
                 if keystroke ==  ord('s'):
                     for decklink in list_decklink:
                         decklink.save_frame(decklink.frame_roi)
