@@ -10,14 +10,12 @@
 
 
 import numpy as np
-import cv2, time, threading, socketio, sys, datetime, os
+import cv2, time, threading, socketio, sys, datetime, os, gi
+gi.require_version('Gst', '1.0')
 from queue import Queue
-
 from gi.repository import Gst
 
-
 Gst.init(None)
-
 
 def updatelog(txt, consoleout = False):
     pid = os.getpid()
@@ -159,8 +157,17 @@ class decklinksrc:
                         old_state, new_state, pending_state = message.parse_state_changed()
                         print(("Pipeline state changed from %s to %s." %
                                (old_state.value_nick, new_state.value_nick)), f'  index = {self.index_device}')
+                               
+                elif message.type == Gst.MessageType.WARNING:
+                    print("Warning message...",  f'  index = {self.index_device}')
+
+                elif message.type == Gst.MessageType.QOS:
+                    print("QOS message...",  f'  index = {self.index_device}')
+                               
                 else:
                     print("Unexpected message received." , f'  index = {self.index_device}')
+                    print(message.type)
+                    
             time.sleep(0.001)
     def stop(self):
         self.keep_going = False
