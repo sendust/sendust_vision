@@ -160,10 +160,10 @@ class decklinksrc:
                                (old_state.value_nick, new_state.value_nick)), f'  index = {self.index_device}')
                                
                 elif message.type == Gst.MessageType.WARNING:
-                    print("Warning message...",  f'  index = {self.index_device}')
+                    print("Warning message...",  f'  index = {self.index_device}', end="\r")
 
                 elif message.type == Gst.MessageType.QOS:
-                    print("QOS message...",  f'  index = {self.index_device}')
+                    print("QOS message...",  f'  index = {self.index_device}', end="\r")
                                
                 else:
                     print("Unexpected message received." , f'  index = {self.index_device}')
@@ -381,10 +381,14 @@ def decode_protocol(data):
                 if each_rect.status:            # reset accum at 'on' request
                     each_rect.reset_accum()
 
-    if ((data["protocol"] == "gui") and (data["data"]["cmd"] == "capture")):
+    if ((data["protocol"] == "gui") and (data["data"]["cmd"] == "capture_test")):
         for decklink in list_decklink:
-            print(f'Capture and save decklink frame.. {decklink.index_device}')
+            updatelog(f'Capture and save decklink frame.. {decklink.index_device}', True)
             decklink.save_frame(decklink.frame_roi)
+
+
+    if ((data["protocol"] == "gui") and (data["data"]["cmd"] == "capture")):
+        capture_all_src()
 
 
     if ((data["protocol"] == "gui") and (data["data"]["cmd"] == "reset")):
@@ -429,12 +433,17 @@ def read_config(file_config):
 def save_status():
     global roi_ary
     updatelog("save status", True)
-    with open("status.txt", "w") as f:
+    try:
+        os.remove("status.txt")
+    except Exception as e:
+        updatelog(e, True)
+     
+    with open("status.txt", "a") as f:
         f.write("name, margin_freeze, margin_black, status\n")
         for each in roi_ary:
             newline = f'{each.name}|{each.margin_freeze}|{each.margin_black}|{int(each.status)}\n'
             f.write(newline)
-            updatelog(newlinee, True)
+            updatelog(newline, True)
 
 
 def load_status():
@@ -459,6 +468,7 @@ def load_status():
 def close_gracefully():
     global decklink, keep_playing, gui
     updatelog("Try to close program....", True)
+    save_status()
     keep_playing = False
     for decklink in list_decklink:
         try:
@@ -467,7 +477,13 @@ def close_gracefully():
             print(e)
     updatelog("close gui", True)
     gui.stop()
-    save_status()
+
+
+def capture_all_src():
+    global list_decklink
+    for decklink in list_decklink:
+        updatelog(f'capture roi frame.. decklink index = {decklink.index_device}')
+        decklink.save_frame(decklink.frame_roi)
     
        
        
@@ -501,6 +517,10 @@ for decklink in list_decklink:      # Start pipeline for each decklink src
     threading.Thread(target=decklink.play).start()
     
 
+updatelog("Show loaded ROI status....", True)
+for each in roi_ary:    # confirm load state
+    updatelog(f'{each.name} {each.margin_black} {each.margin_freeze}', True)
+
 keep_playing = True
 declink_index_min = min(get_decklink_list(list_config))
 updatelog("Decklin index minimum is " + str(declink_index_min), True)
@@ -529,8 +549,7 @@ while keep_playing:
                 if keystroke ==  ord('q'):
                     close_gracefully()
                 if keystroke ==  ord('s'):
-                    for decklink in list_decklink:
-                        decklink.save_frame(decklink.frame_roi)
+                    capture_all_src()
 
 
                     
