@@ -295,7 +295,7 @@ class sioclient():
     def on_disconnect(self):
         print('disconnected from server')
         
-    def connect(self, address):
+    def connect_NG(self, address):
         self.address = address
 
         result = False
@@ -307,6 +307,21 @@ class sioclient():
             result = False
         finally:
             return result
+
+    def connect(self, address):
+            self.address = address
+            result = False
+            
+            try:
+                self.sio.connect(address)
+                result = True
+            except Exception as e:
+                # 예외 발생 시 에러 내용만 출력하고 result는 기존의 False 유지
+                print(f"연결 에러 발생: {e}")
+                
+            # finally를 쓰지 않고, 예외 처리가 모두 끝난 후 안전하게 리턴
+            return result
+
 
     def isconnected(self):
         return self.sio.connected
@@ -532,7 +547,7 @@ while keep_playing:
         qsize = decklink.framequeue.qsize()
         print("  qsize = " , qsize, end='')
         if (qsize > 0):
-            hdframe = decklink.framequeue.get()
+            hdframe = decklink.framequeue.get().copy()
             gray = cv2.cvtColor(hdframe, cv2.COLOR_BGR2GRAY )
             send_json = []
             for each_roi in roi_ary:
