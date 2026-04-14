@@ -22,3 +22,26 @@ gstreamer, gst-base, gst-bad, gst-python, gtk3, cv2, numpy, socketio,
 
 ### node
 express, socket.io, cloudcmd
+
+
+### Added 2026
+python -m pip install requests --break-system-packages
+
+msys2 gstreamer
+
+```bash
+pacman -S mingw-w64-x86_64-gstreamer \
+          mingw-w64-x86_64-gst-plugins-base \
+          mingw-w64-x86_64-gst-plugins-good \
+          mingw-w64-x86_64-gst-plugins-bad \
+          mingw-w64-x86_64-gst-plugins-ugly \
+          mingw-w64-x86_64-gst-libav \
+          mingw-w64-x86_64-python \
+          mingw-w64-x86_64-python-gobject \
+          mingw-w64-x86_64-gst-python
+```
+
+```bash
+pacman -S mingw-w64-x86_64-python-opencv
+python -m pip install requests --break-system-packages
+```
