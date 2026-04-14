@@ -46,3 +46,9 @@ pacman -S mingw-w64-x86_64-python-opencv
 python -m pip install python-socketio --break-system-packages
 python -m pip install requests --break-system-packages
 ```
+
+
+## Check decklink input
+```bash
+gst-launch-1.0 decklinkvideosrc device-number=0 mode=1080i5994 ! deinterlace ! videoconvert ! autovideosink
+```
